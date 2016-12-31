@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "gulp": "^3.9.1",
+    "gulp-nodemon": "^2.2.1"
+  },
+  "devDependencies": {
+    "gulp-shell": "^0.5.2"
+  }
+}
