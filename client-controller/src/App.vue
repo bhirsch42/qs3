@@ -17,12 +17,12 @@
             </div>
             <div class="button" v-on:click="player('play', {title: selected.title})">Play Now</div>
             <div class="button" v-on:click="player('fadeIn', {title: selected.title, duration: 5})">Fade In</div>
-            <div class="button" v-on:click="player('play', {title: selected.title, delay: 3})">Play in 3s</div>
+            <div class="button" v-on:click="player('play', {title: selected.title, countIn: true})">Count In</div>
           </div>
           <div class="home-panel" id="home-manage">
             <div class="button" v-on:click="player('stop', {})">Stop Now</div>
             <div class="button" v-on:click="player('fadeOut', {duration: 5})">Fade Out</div>
-            <div class="button" v-on:click="player('stop', {delay: 3})">Stop in 3s</div>
+            <div class="button" v-on:click="player('stop', {countIn: true})">Count Out</div>
           </div>
         </div>
 

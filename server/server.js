@@ -31,7 +31,10 @@ io.on('connection', function (socket) {
   socket.on('controller to server', (data) => {
     console.log('received controller to server', data)
     fs.readFile('./static/incompetech_songs.json', (err, jsonStuff) => {
-      socket.emit('server to controller', JSON.parse(jsonStuff.toString()))
+      socket.emit('server to controller - songData', JSON.parse(jsonStuff.toString()))
+    });
+    fs.readFile('./static/incompetech_waveforms.json', (err, jsonStuff) => {
+      socket.emit('server to controller - waveforms', JSON.parse(jsonStuff.toString()))
     });
   })
 });
