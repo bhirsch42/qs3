@@ -3629,6 +3629,10 @@ watchpack@^0.2.1:
     chokidar "^1.0.0"
     graceful-fs "^4.1.2"
 
+wavesurfer.js@^1.2.8:
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/wavesurfer.js/-/wavesurfer.js-1.2.8.tgz#54e79856cbf011a5b9b63d6b3cff6f401dd2c616"
+
 webpack-core@~0.6.9:
   version "0.6.9"
   resolved "https://registry.yarnpkg.com/webpack-core/-/webpack-core-0.6.9.tgz#fc571588c8558da77be9efb6debdc5a3b172bdc2"

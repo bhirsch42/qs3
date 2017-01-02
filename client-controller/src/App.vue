@@ -1,42 +1,51 @@
 <template>
   <div id="app">
-    <div v-if="!fullscreen">
-      <button v-on:click="goFullscreen">Fullscreen</button>   
+    <div id="fullscreen-button-wrapper" v-if="!fullscreen">
+      <button id="fullscreen-button" v-on:click="goFullscreen">Click me</button>   
     </div>
     <div v-if="fullscreen">
       <div class="fullscreen">
 
         <div id="home" v-show="page == 'home'">
           <div class="home-panel" id="home-search">
-            <button v-on:click="clearFeels(); focusSearchBar();">Search by Name</button>
-            <button v-on:click="page = 'search'">Search by Feel</button>
+            <div class="button" v-on:click="clearFeels(); clearGenres(); focusSearchBar();">Search by Name</div>
+            <div class="button" v-on:click="page = 'search'">Search by Feel / Genre</div>
           </div>
           <div class="home-panel" id="home-action">
             <div id="selected">
               {{ selected.title }}
             </div>
-            <button v-on:click="player('play', {title: selected.title})">Play Now</button>
-            <button v-on:click="player('fadeIn', {title: selected.title, duration: 5})">Fade In</button>
-            <button v-on:click="player('play', {title: selected.title, delay: 3})">Play in 3s</button>
+            <div class="button" v-on:click="player('play', {title: selected.title})">Play Now</div>
+            <div class="button" v-on:click="player('fadeIn', {title: selected.title, duration: 5})">Fade In</div>
+            <div class="button" v-on:click="player('play', {title: selected.title, delay: 3})">Play in 3s</div>
           </div>
           <div class="home-panel" id="home-manage">
-            <button v-on:click="player('stop', {})">Stop Now</button>
-            <button v-on:click="player('fadeOut', {duration: 5})">Fade Out</button>
-            <button v-on:click="player('stop', {delay: 3})">Stop in 3s</button>
+            <div class="button" v-on:click="player('stop', {})">Stop Now</div>
+            <div class="button" v-on:click="player('fadeOut', {duration: 5})">Fade Out</div>
+            <div class="button" v-on:click="player('stop', {delay: 3})">Stop in 3s</div>
           </div>
         </div>
 
         <div id="search" v-show="page == 'search'">
-          <input id="search-bar" type="text" v-model="query" v-on:keyup="search">
-          <button id="clear-search" v-on:click="query=``; clearFeels(); search(query);">Clear</button>
-          <div id="results">
-            <div v-on:click="selected = item; page = 'home'" class="result" v-for="item in items">
-              {{item.title}}
-            </div >
+          <div id="search-bar-wrapper">
+            <input id="search-bar" type="text" v-model="query" v-on:keyup="search">
+            <button id="clear-search" v-on:click="query=``; clearFeels(); clearGenres(); search(query);">Clear</button>            
           </div>
-          <div id="feels">
-            <div v-on:click="feel.selected = !feel.selected; search();" class="feel" :class="{selected: feel.selected}" v-for="feel in feels">
-              {{ feel.name }}
+          <div class="thirds">
+            <div id="feels">
+              <div v-on:click="feel.selected = !feel.selected; search();" class="feel" :class="{selected: feel.selected}" v-for="feel in feels">
+                {{ feel.name }}
+              </div>
+            </div>
+            <div id="genres">
+              <div v-on:click="genre.selected = !genre.selected; search();" class="genre" :class="{selected: genre.selected}" v-for="genre in genres">
+                {{ genre.name }}
+              </div>
+            </div>            
+            <div id="results">
+              <div v-on:click="selected = item; page = 'home'" class="result" v-for="item in items">
+                {{item.title}}
+              </div >
             </div>
           </div>
         </div>
@@ -59,6 +68,7 @@ var data = {
   items: [],
   query: '',
   feels: [],
+  genres: [],
   page: 'home',
   selected: {title: 'none'}
 }
@@ -74,12 +84,16 @@ var allSongs;
 // So far, this just gets the incompetech songs
 socket.emit('controller to server', {command: "get incompetech data"})
 socket.on('server to controller', (jsonStuff) => {
+  // save all songs in global var
   allSongs = jsonStuff;
+
+  // create searchable library
   library = new Fuse(allSongs, {
     keys: ['title']
   });
   data.items = allSongs;
 
+  // create a hash of unique feels
   let uniqueFeels = {}
   allSongs.forEach((song) => {
     song.feels.forEach((feel) => {
@@ -91,6 +105,16 @@ socket.on('server to controller', (jsonStuff) => {
   data.feels = Object.keys(uniqueFeels).sort().map((o) => {
     return {name: o, selected: false};
   });
+
+  // create a hash of unique genres
+  let uniqueGenres = {}
+  allSongs.forEach((song) => {
+    uniqueGenres[song.genre] = true;        
+  })
+  data.genres = Object.keys(uniqueGenres).sort().map((o) => {
+    return {name: o, selected: false};
+  });
+
 })
 
 
@@ -104,8 +128,9 @@ export default {
   },
   methods: {
     goFullscreen() {
-      screenfull.request();
+      console.log('Going Fullscreen')
       this.fullscreen = true;
+      screenfull.request();
     },
     search() {
       this.items = library.search(this.query);
@@ -129,6 +154,21 @@ export default {
           return false;
         })        
       }
+      let selectedGenres = this.genres.filter((o) => {
+        if (o.selected) {
+          return true;
+        }
+        return false
+      }).map((o) => {
+        return o.name;
+      })
+      console.log(selectedGenres)
+      if (selectedGenres.length > 0) {
+        this.items = this.items.filter((o) => {
+          return selectedGenres.indexOf(o.genre) > -1;
+        })        
+      }
+      document.getElementById('results').scrollTop = 0;
     },
     focusSearchBar() {
       this.page = 'search';
@@ -144,6 +184,11 @@ export default {
       this.feels.forEach((o) => {
         o.selected = false;
       })
+    },
+    clearGenres() {
+      this.genres.forEach((o) => {
+        o.selected = false;
+      })
     }
   }
 }
@@ -157,18 +202,26 @@ body, html {
 
 input {
   margin: 10px;
-  padding: 10px;
+  // padding: 10px;
   font-size: 16px;
 }
 
-#results {
-  position: absolute;
-  top: 10%;
-  right: 0;
-  width: 50%;
-  height: 90%;
-  overflow-y: scroll;
+#fullscreen-button-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+}
 
+#fullscreen-button {
+  font-size: 20vh;
+  padding: 10vh;
+}
+
+#results {
+  height: 85vh;
+  overflow-y: scroll;
   .result {
     border: 1px solid black;
     padding: 5px;
@@ -177,21 +230,51 @@ input {
   }
 }
 
-#feels {
-  display: flex;
-  width: 50%;
+#feels, #genres, #results {
+  width: 33%;
+}
+
+#feels, #genres {
   flex-wrap: wrap;
-  .feel {
-    // font-size: px;
-    border: 1px solid black;
-    padding: 5px;
-    margin: 5px;
-    border-radius: 999px;
-    &.selected {
-      background-color: black;
-      color: white;
-    }
+  align-items: stretch;
+  justify-content: stretch;
+  .feel, .genre {
+    display: inline-block;
+    width: 23%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 12px;
+  }  
+}
+
+.feel {
+  border: 1px solid green;
+  &.selected {
+    background-color: green;
+    color: white;
   }
+}
+
+.genre {
+  border: 1px solid red;
+  &.selected {
+    background-color: red;
+    color: white;
+  }
+}
+
+#search-bar-wrapper {
+  height: 15vh;
+}
+
+.thirds {
+  display: flex;
+  height: 85vh;
+  overflow: hidden;
 }
 
 #home {
@@ -217,13 +300,21 @@ input {
     background-color: red;
   }
 
-  button {
+  .button {
+    user-select: none;
+    text-align: center;
     font-size: 18px;
-    padding-top: 30px;
-    padding-bottom: 30px;
     width: 90%;
     font-size: 24px;
     border: 1px solid white;
+    background-color: rgba(255,255,255,.8);
+    
+    padding-top: 20px;
+    padding-bottom: 20px;
+    &:active {
+      background-color: rgba(0,0,0,.8);
+      color: white;
+    }
   }
 
   #selected {
