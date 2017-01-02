@@ -5,6 +5,12 @@
         <div class="song">
           <div class="title">{{ playing.song.title }}</div>
           <canvas width="1280" height="200" style="border: 1ps solid black;" v-draw-waveform="playing"></canvas>
+          <div class="fading" v-if="playing.fadingIn">
+            Fading in
+          </div>
+          <div class="fading" v-if="playing.fadingOut">
+            Fading out
+          </div>
         </div>
       </div>
     </div>
@@ -65,7 +71,9 @@ var playSong = (song, fade) => {
   }
   let playing = {
     song: song,
-    id: song.audio.play()
+    id: song.audio.play(),
+    fadingIn: false,
+    fadingOut: false
   }
   data.nowPlaying.push(playing)
   if (fade) {
@@ -117,8 +125,10 @@ var loadAndPlay = (title, countIn, fade) => {
       html5: true,
       onfade: (id) => {
         let playing = _.find(data.nowPlaying, {id: id});
-        if (playing.fadingOut)
+        if (playing.fadingOut) {
           playing.song.audio.stop();
+        }
+        playing.fadingIn = false;
       },
       onstop(id) {
         data.nowPlaying = _.filter(data.nowPlaying, (playing) => {
@@ -183,6 +193,11 @@ export default {
     drawWaveform(canvasElement, binding) {
       let playing = binding.value
       let waveform = data.waveforms[playing.song.title];
+
+      if (waveform.length < 5) {
+        return;
+      }
+
       let ctx = canvasElement.getContext("2d");
       let width = canvasElement.width;
       let height = canvasElement.height;
@@ -215,22 +230,12 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 10px;
 }
 
-#countdown {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: red;
-  font-size: 100vh;
-  font-weight: bold;
+body, html {
+  color: white;
+  background-color: black;
 }
 
 #slab {
@@ -243,7 +248,12 @@ export default {
 }
 
 .title {
-  font-size: 10vh;
+  font-size: 15vh;
+}
+
+.fading {
+  font-size: 15vh;
+  color: gray;
 }
 
 </style>
